@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { put } from "@vercel/blob";
 import { renderInSandbox } from "@/lib/sandbox";
 
 export const runtime = "nodejs";
@@ -13,13 +14,14 @@ export async function POST(req: Request) {
     const files = [{ rel: "index.html", content: Buffer.from(html) }];
     const { mp4 } = await renderInSandbox(files);
 
-    // Return raw binary — caller handles storage (avoids Vercel Blob store config)
-    return new Response(mp4, {
-      headers: {
-        "Content-Type": "video/mp4",
-        "Content-Length": mp4.byteLength.toString(),
-      },
+    const blob = await put("renders/render.mp4", mp4, {
+      access: "public",
+      contentType: "video/mp4",
+      addRandomSuffix: true,
+      allowOverwrite: true,
     });
+
+    return NextResponse.json({ url: blob.url });
   } catch (err) {
     console.error("[/api/render] failed", err);
     return NextResponse.json(
