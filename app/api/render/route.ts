@@ -1,14 +1,17 @@
 import { NextResponse } from "next/server";
 import { put } from "@vercel/blob";
-import { collectFiles, renderInSandbox } from "@/lib/sandbox";
-import { PREVIEW_COMPOSITION_DIR } from "@/lib/preview";
+import { renderInSandbox } from "@/lib/sandbox";
 
 export const runtime = "nodejs";
 export const maxDuration = 300;
 
-export async function POST() {
+export async function POST(req: Request) {
   try {
-    const files = await collectFiles(PREVIEW_COMPOSITION_DIR);
+    const { html } = (await req.json()) as { html: string };
+    if (!html) {
+      return NextResponse.json({ error: "Missing html field in request body" }, { status: 400 });
+    }
+    const files = [{ rel: "index.html", content: Buffer.from(html) }];
     const { mp4 } = await renderInSandbox(files);
 
     const blob = await put("renders/render.mp4", mp4, {
