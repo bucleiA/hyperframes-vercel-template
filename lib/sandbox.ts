@@ -24,7 +24,8 @@ export async function runSandboxCommand(
 ): Promise<void> {
   const result = await sandbox.runCommand(opts);
   if (result.exitCode !== 0) {
-    throw new Error(`${label} failed (exit ${result.exitCode}):\n${await result.stderr()}`);
+    throw new Error(`${label} failed (exit ${result.exitCode}):
+${await result.stderr()}`);
   }
 }
 
@@ -109,10 +110,7 @@ async function restoreOrCreate(): Promise<Sandbox> {
       });
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
-      if (process.env.VERCEL_ENV === "production") {
-        throw new Error(`snapshot restore failed in production: ${msg}`);
-      }
-      console.warn(`[sandbox] snapshot restore failed in dev, falling back: ${msg}`);
+      console.warn(`[sandbox] snapshot restore failed, using fresh sandbox: ${msg}`);
     }
   }
 
